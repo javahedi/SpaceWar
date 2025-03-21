@@ -1,10 +1,7 @@
-Creating a **README** file for your GitHub repository is a great way to showcase your project and attract the attention of recruiters. A well-written README should provide an overview of the project, explain how to set it up, and highlight its key features. Below is a template for your `README.md` file tailored to your **SpaceWar** game:
-
----
 
 # SpaceWar 🚀
 
-![SpaceWar Screenshot](assets/figures/background1.png) <!-- Add a screenshot of your game here -->
+![SpaceWar Screenshot](assets/figures/Screenshot.png) <!-- Add a screenshot of your game here -->
 
 **SpaceWar** is a fast-paced 2D space shooter game built using **SFML (Simple and Fast Multimedia Library)**. The game features smooth scrolling backgrounds, enemy waves, player-controlled shooting, and a scoring system. It's a fun and engaging project that demonstrates my skills in C++ programming, game development, and object-oriented design.
 
