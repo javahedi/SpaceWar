@@ -1,0 +1,71 @@
+# Ignore macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Ignore build directories
+build/
+bin/
+*.o
+*.out
+*.a
+*.dylib
+*.so
+
+# Ignore executable
+SpaceWar
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.user
+
+# Ignore CMake build files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore SFML dependencies (if downloaded locally)
+dependencies/
+
+# Ignore log files
+*.log
+
+# Ignore temporary files
+*.tmp
+*.bak
+*.pid
+*.lock
+
+# Ignore compiled binaries and libraries
+*.dll
+*.exe
+*.bin
+
+# Ignore local configuration files
+config.local
+.env
+
+# Ignore generated documentation
+docs/
+*.html
+*.css
+*.js
+
+# Ignore package manager files
+node_modules/
+package-lock.json
+yarn.lock
+
+# Ignore Python virtual environments
+venv/
+*.pyc
+__pycache__/
+
+# Ignore other unnecessary files
+*.zip
+*.tar.gz
+*.rar

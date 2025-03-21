@@ -1,0 +1,41 @@
+Key Concepts for Scrolling Movement
+
+1- Scrolling Background:
+    Use a large background texture that scrolls vertically or horizontally to create 
+    the illusion of movement.
+    Reset the background position when it goes out of the screen to create a seamless 
+    loop.
+2- Moving Objects:
+    Move enemies, bullets, and other objects in the opposite direction of the background 
+    scroll to simulate forward motion.
+3- Parallax Scrolling (Optional):
+    Use multiple layers of backgrounds scrolling at different speeds to create a depth 
+    effect.
+==================
+
+1. Scrolling Background
+    Load a large background texture.
+    Use two background sprites to create a seamless loop.
+    Move the background sprites downward (or in the desired direction) and reset 
+    their position when they go off-screen.
+2. Moving Objects
+    Move enemies and other objects downward (or in the opposite direction of the 
+    background scroll).
+    Spawn new enemies at the top of the screen periodically.
+3. Game Loop
+    Update the positions of the background and objects in each frame.
+    Draw the updated objects and background.
+
+%%%%%%%%%%%%%%%%%%%
+In C++, vectors are dynamic arrays, that can grow or shrink and their storage 
+is handled by the container itself. There are two ways of inserting an element 
+in a vector. They are push_back() and emplace_back().
+
+push_back() slower than emplace_back().
+
+emplace_back(): 
+    This method is used instead of creating the object using parameterized constructor 
+    and allocating it into a different memory, then passing it to the copy constructor, 
+    which will insert it into the vector. This function can directly insert the object 
+    without calling the copy constructor
+
