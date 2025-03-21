@@ -32,7 +32,7 @@
 ## Installation 🛠️
 
 ### Prerequisites
-- **SFML 2.5.1** or later (install via your package manager or download from [SFML's official website](https://www.sfml-dev.org/)).
+- **SFML 3.0.0** or later (install via your package manager or download from [SFML's official website](https://www.sfml-dev.org/)).
 - **C++ Compiler** (e.g., GCC, Clang, or MSVC).
 
 ### Steps
