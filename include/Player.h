@@ -9,7 +9,7 @@
 class Player {
     private: 
         sf::Texture bulletTexture, playerTexture;  // Texture stored as a member variable, safe not be killed out of scope
-        sf::Sprite fighterSprite;
+        sf::Sprite playerSprite;
         float speed;
         std::vector<Bullet> bullets;
 
@@ -26,7 +26,7 @@ class Player {
         void shoot();
         std::vector<Bullet>& getBullets();
         sf::FloatRect getBounds() const;
-        void resetPostion(sf::Vector2f psotion);
+        void resetPosition(sf::Vector2f psotion);
 
 };
 

@@ -1,24 +1,43 @@
 #include "Game.h"
 
 
-Game::Game(const sf::Texture& playerTexture, const sf::Texture& enemyTexture, 
-           const sf::Texture& backgroundTexture, const sf::Texture& bulletTexture)
-    : SCORE(0),  gameOver(false), gameOverText(font, ""), scoreText(font, ""),
+Game::Game(const sf::Texture& playerTexture, const sf::Texture& enemyTexture,
+            const sf::Texture& backgroundTexture, const sf::Texture& bulletTexture,
+            const sf::Texture& bossTexture, const sf::Texture& bulletBossTexture)
+    : SCORE(0), 
+      POWER_BOSS(20), 
+      gameOver(false), 
+      gameOverText(font, ""), 
+      scoreText(font, ""),
+
       window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "Space War"),
-      player({WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 1.5f}, PLAYER_SPEED,playerTexture, bulletTexture),
-      scrollSpeed(SCROLL_SPEED), enemySpeed(ENEMY_SPEED),
-      isMouseOverPlayAgain(false), isMouseOverQuit(false),
-      playAgainText(font, "Play Again"), quitText(font, "Quit"),
-      //playerTexture(playerTexture),       // Store textures
-      //bulletTexture(bulletTexture),
+      player({WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 1.5f}, 
+             PLAYER_SPEED, playerTexture, bulletTexture),
+      
+      //boss({WINDOW_WIDTH / 2.0f, 10.f }, bossTexture, bulletBossTexture),
+      boss(nullptr),  // Initialize as nullptr
+      nextBossSpawnScore(BOSS_ACTIVATION_SCORE),
+      bossRespawnCooldown(10.0f),  // 10 seconds cooldown
+      bossTexture(bossTexture),              // Store textures
+      bulletBossTexture(bulletBossTexture), 
+
+      scrollSpeed(SCROLL_SPEED), 
+      enemySpeed(ENEMY_SPEED),
+      isMouseOverPlayAgain(false), 
+      isMouseOverQuit(false),
+      playAgainText(font, "Play Again"), 
+      quitText(font, "Quit"),
+     
       enemyTexture(enemyTexture),           // Store enemy texture
       backgroundTexture(backgroundTexture),
       background1Sprite(backgroundTexture), 
       background2Sprite(backgroundTexture),
-      gameOverBuffer(), gameOverSound(gameOverBuffer) 
+      gameOverBuffer(), 
+      gameOverSound(gameOverBuffer), 
+      explosionBuffer(),
+      explosionSound(explosionBuffer)
     {
 
-        
         // Initialize background sprites
         background1Sprite.setTexture(backgroundTexture);
         background2Sprite.setTexture(backgroundTexture);
@@ -26,7 +45,6 @@ Game::Game(const sf::Texture& playerTexture, const sf::Texture& enemyTexture,
         background2Sprite.setTextureRect(sf::IntRect({0, 0}, {WINDOW_WIDTH, WINDOW_HEIGHT}));
         background1Sprite.setPosition({0.f, 0.f});
         background2Sprite.setPosition({0.f, -WINDOW_HEIGHT});
-
 
 
         // Load font
@@ -42,7 +60,6 @@ Game::Game(const sf::Texture& playerTexture, const sf::Texture& enemyTexture,
         gameOverText.setFillColor(sf::Color::Red);
         gameOverText.setStyle(sf::Text::Bold);
         gameOverText.setPosition({WINDOW_WIDTH / 8.0f, WINDOW_HEIGHT / 4.0f});
-        //gameOverText.setPosition({(WINDOW_WIDTH - gameOverText.getLocalBounds().width) / 2.0f, WINDOW_HEIGHT / 2.0f});
 
 
         // Set up score text
@@ -68,10 +85,15 @@ Game::Game(const sf::Texture& playerTexture, const sf::Texture& enemyTexture,
             throw std::runtime_error("Failed to load hit sound effect!");
         }
         gameOverSound.setBuffer(gameOverBuffer);
+
+        if (!explosionBuffer.loadFromFile("assets/musics/explosion-01.wav")) {
+            throw std::runtime_error("Failed to load explosion sound effect!");
+        }
+
+        explosionSound.setBuffer(explosionBuffer);
         
 
-}
-
+};
 
 
 void Game::handleInput(float deltaTime) {
@@ -170,10 +192,40 @@ void Game::update(float deltaTime) {
 
         checkCollisionsEnemy();
         checkCollisionsBullet();
-   
+
+
+
+        // Boss logic - checks both score and cooldown
+        if (!bossActive && 
+            SCORE >= nextBossSpawnScore && 
+            bossRespawnClock.getElapsedTime().asSeconds() >= bossRespawnCooldown) 
+        {
+            spawnBoss();
+        }
+        
+        if (boss && bossActive) {  // Always check before using
+            boss->update(deltaTime);
+            boss->shoot();
+            checkCollisionsBoss();
+            checkCollisionsBossBullet();
+        }
+
+        
     }
     
 };
+
+
+void Game::spawnBoss() {
+    boss = std::make_unique<Boss>(
+        sf::Vector2f{WINDOW_WIDTH / 2.0f, 100.f},  // Position
+        bossTexture,                              // Boss texture
+        bulletBossTexture                         // Bullet texture
+    );
+    bossActive = true;
+    POWER_BOSS = 20;  // Reset boss health
+    
+}
 
 
 void Game::render() {
@@ -186,10 +238,14 @@ void Game::render() {
 
     // Draw player
     player.draw(window);
-    
     // Draw enemies
     for (const auto& enemy : enemies){
         enemy.draw(window);
+    }
+
+    // Draw Boss
+    if (bossActive  && SCORE > BOSS_ACTIVATION_SCORE ) {
+        boss->draw(window);
     }
 
 
@@ -213,15 +269,17 @@ void Game::checkCollisionsEnemy() {
             break;
         } 
     } 
+
 };
+
+
 
 
 void Game::checkCollisionsBullet() {
     // Check collision between bullets and enemies
 
-    auto& bullets = player.getBullets();
-    //std::cout << bullets.size() << std::endl;
-    for (auto& bullet : bullets) {
+    auto& playerBullets = player.getBullets();
+    for (auto& bullet : playerBullets) {
         for (auto& enemy : enemies) {
             // Check for intersection using findIntersection
             if (bullet.getBounds().findIntersection(enemy.getBounds()).has_value()) {
@@ -231,13 +289,33 @@ void Game::checkCollisionsBullet() {
                 break; // Exit inner loop after collision
             }
         }
+
+        // Check if boss exists and is active
+        if (boss && bossActive) {
+            if (bullet.getBounds().findIntersection(boss->getBounds()).has_value()) {
+                POWER_BOSS--;
+                std::cout << "POWER_BOSS = " << POWER_BOSS << std::endl;
+                
+                if (POWER_BOSS <= 0) {
+                    explosionSound.play();
+                    boss->getBullets().clear();
+                    boss.reset();  // Completely remove the boss instance
+                    bossActive = false;
+                    POWER_BOSS = 20;  // Reset for next boss spawn
+                    SCORE     += 50;  // Bonus points for defeating boss
+
+                    // Set next spawn threshold and start cooldown
+                    nextBossSpawnScore = SCORE + 10;  // Require 10 more points
+                    bossRespawnClock.restart();
+                }
+                bullet.markForRemoval();
+            }
+        }
     }
 
-    
-
-    bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+    playerBullets.erase(std::remove_if(playerBullets.begin(), playerBullets.end(), 
         [](const Bullet& bullet) {return bullet.isMarkedForRemoval();}),
-        bullets.end());
+        playerBullets.end());
 
     enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
         [](const Enemy& enemy) {return enemy.isMarkedForRemoval();}),
@@ -246,15 +324,53 @@ void Game::checkCollisionsBullet() {
 }
 
 
-void Game::resetGame() {
-    gameOver = false;
-    SCORE = 0;
 
-    ///
-    player.resetPostion({WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 1.5f});    
-    ///
-    enemies.clear();
+void Game::checkCollisionsBoss() {
+    if (player.getBounds().findIntersection(boss->getBounds()).has_value()) {
+        gameOver = true; 
+        gameOverSound.play();
+    } 
+    
+};
+
+
+
+void Game::checkCollisionsBossBullet() {
+    // Check collision between bullets and enemies
+    auto& bossbullets = boss->getBullets();
+    //std::cout << bullets.size() << std::endl;
+    for (auto& bullet : bossbullets) {
+        // Check for intersection using findIntersection
+        if (bullet.getBounds().findIntersection(player.getBounds()).has_value()) {
+            bullet.markForRemoval();
+            gameOver = true; 
+            gameOverSound.play();
+        }
+    }
+
+};
+
+
+
+void Game::resetGame() {
+    gameOver   = false;
+    SCORE      = 0;
+
+    // Reset player state
+    player.resetPosition({WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 1.5f});
     player.getBullets().clear();
+
+    // Reset enemy state
+    enemies.clear();
+
+    // Reset boss state
+    if (boss) {
+        boss->getBullets().clear();
+    }
+    boss.reset();
+    bossActive = false;
+    POWER_BOSS = 20;
+    
 
     ///
     background1Sprite.setTexture(backgroundTexture);
@@ -283,3 +399,5 @@ void Game::run() {
     }
 
 };
+
+

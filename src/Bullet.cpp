@@ -14,7 +14,7 @@ Bullet::Bullet(const sf::Vector2f& position, const sf::Vector2f& speed,
         sf::Vector2u spriteBulletSize = bullettexture.getSize();
         spriteBullet.setOrigin({spriteBulletSize.x / 2.0f, spriteBulletSize.y / 2.0f});
 
-        spriteBullet.setScale({0.8f, 0.8f});
+        spriteBullet.setScale({0.8f, 0.6f});
 
         // Set the initial position
         spriteBullet.setPosition(position);
